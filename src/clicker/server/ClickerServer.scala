@@ -3,7 +3,7 @@ package clicker.server
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import clicker.database.DatabaseActor
 import clicker.model.GameActor
-import clicker.{ClickGold, SaveGames, UpdateGames}
+import clicker.{BuyEquipment, ClickGold, GameState, Save, SaveGames, Update, UpdateGames}
 import com.corundumstudio.socketio.listener.{DataListener, DisconnectListener}
 import com.corundumstudio.socketio.{AckRequest, Configuration, SocketIOClient, SocketIOServer}
 
@@ -32,14 +32,21 @@ class ClickerServer(val database: ActorRef, configuration: String) extends Actor
   override def receive: Receive = {
     // These are the cases server has to handle
     case SaveGames  =>
-      // TODO actual processing
-      // println("Saving")
+      println("Saving")
+      socketToActorRef.values.foreach((actor:ActorRef) => actor ! Save)
+
 
     case UpdateGames =>
-      // TODO actual processing
-      // println("Updating")
+      println("Updating")
+      socketToActorRef.values.foreach((actor:ActorRef) => actor ! Update)
 
-      // TODO more cases
+    case received:GameState =>
+      val gameState:String = received.gameState
+      actorRefToSocket.keys.foreach((actor:ActorRef)=> if(actor == sender()){
+        val client:SocketIOClient = actorRefToSocket(sender())
+        client.sendEvent("gameState", gameState)
+      })
+
   }
 
   class RegisterListener(server: ClickerServer) extends DataListener[String]{
@@ -63,7 +70,9 @@ class ClickerServer(val database: ActorRef, configuration: String) extends Actor
 
   class BuyEquipmentClicked(server: ClickerServer) extends DataListener[String]{
     override def onData(client: SocketIOClient, data: String, ackSender: AckRequest): Unit = {
-      // TODO process buying equipment message and perform necessary actions
+      println(client+"bought" + data)
+      val actorRef:ActorRef = server.socketToActorRef(client)
+      actorRef ! BuyEquipment(data)
     }
   }
 
@@ -105,8 +114,15 @@ object ClickerServer {
     val db = actorSystem.actorOf(Props(classOf[DatabaseActor], "test"))
     val server = actorSystem.actorOf(Props(classOf[ClickerServer], db, ""))
 
-    actorSystem.scheduler.schedule(0.milliseconds, 100.milliseconds, server, UpdateGames)
-    actorSystem.scheduler.schedule(0.milliseconds, 1000.milliseconds, server, SaveGames)
+    actorSystem.scheduler.scheduleAtFixedRate(0.milliseconds, 100.milliseconds, server, UpdateGames)
+    actorSystem.scheduler.scheduleAtFixedRate(0.milliseconds, 1000.milliseconds, server, SaveGames)
   }
 
+}
+
+object test{
+  def main(args: Array[String]): Unit = {
+    val testNr:Float = 3149600/1000000000
+    println(testNr)
+  }
 }

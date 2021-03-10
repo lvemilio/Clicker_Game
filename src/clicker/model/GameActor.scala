@@ -45,21 +45,16 @@ class GameActor(username: String, database: ActorRef) extends Actor {
 
 
     case Update =>
-      val timeSinceLUpdate:Long = (System.nanoTime() - currentGame.lastUpdateTime)/1000000000
-      println("Time since last update:" + timeSinceLUpdate)
-      currentGame.lastUpdateTime = System.nanoTime()
-      val excavatorIdle:Double = timeSinceLUpdate * 10
-      val goldMineIdle:Double = timeSinceLUpdate * 100
-      currentGame.gold+= (excavatorIdle * currentGame.excavators) + (goldMineIdle*currentGame.goldMines)
-      val gameState: String = currentGame.getGameState()
+      currentGame.passiveIncome(System.nanoTime())
+      val gameState: String = currentGame.getGameState
       sender() ! GameState(gameState)
-
     case Save=>
-      val gameState: String = currentGame.getGameState()
-      database ! SaveGame(username,gameState)
+      val gameState2: String = currentGame.getGameState
+      database ! SaveGame(username,gameState2)
 
 
     case received: GameState =>
+      println("GameState received")
       val gameStateString:String = received.gameState
       val gameState = Json.parse(gameStateString)
       val lastUpdate:Long = (gameState \ "lastUpdateTime").as[Long]

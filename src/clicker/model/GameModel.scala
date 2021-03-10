@@ -26,4 +26,11 @@ class GameModel {
           """
     gameState
   }
+  def passiveIncome(curTime:Long):Unit={
+    val timeCounter:Double = (curTime - lastUpdateTime)/1000000000.0
+    println("Current time counter:"+ timeCounter)
+    gold += (timeCounter*goldMines*100) + (timeCounter*excavators*10)
+    lastUpdateTime = System.nanoTime()
+  }
+
 }

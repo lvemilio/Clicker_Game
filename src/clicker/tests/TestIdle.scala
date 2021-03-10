@@ -57,6 +57,7 @@ class TestIdle extends TestKit(ActorSystem("TestIdle"))
         gameActor ! BuyEquipment("excavator")
       }
       expectNoMessage(2000.millis)
+
       gameActor ! Update
 
       val gs2: GameState = expectMsgType[GameState](300.millis)
