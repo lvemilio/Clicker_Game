@@ -120,9 +120,3 @@ object ClickerServer {
 
 }
 
-object test{
-  def main(args: Array[String]): Unit = {
-    val testNr:Float = 3149600/1000000000
-    println(testNr)
-  }
-}
